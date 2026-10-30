@@ -21,6 +21,24 @@ class Settings{
 				options: ["high", "medium", "low", "lowest"],
 				default: phone ? "medium" : "high"
 			},
+						resolution: {
+				type: "select",
+				options: ["high", "medium", "low", "lowest"],
+				default: "high" // ① スマホ判定（phone ? "medium" :）を消して強制的に high 固定にします
+			},
+			dancer: {
+				type: "toggle",
+				default: true // ② ダンサーの初期値をONに
+			},
+			runner: {
+				type: "toggle",
+				default: true // ③ ランナーの初期値をONに
+			},
+			mob: {
+				type: "toggle",
+				default: true // ④ モブの初期値をONに
+			},
+			
 			touchAnimation: {
 				type: "toggle",
 				default: !ios,
@@ -133,28 +151,29 @@ class Settings{
 				this.storage.language = language
 			}
 		}catch(e){}
-	}
-	getLang(){
-		if("languages" in navigator){
-			var userLang = navigator.languages.slice()
-			userLang.unshift(navigator.language)
-			for(var i in userLang){
-				for(var j in allStrings){
-					if(allStrings[j].regex.test(userLang[i])){
-						return j
-					}
-				}
-			}
-		}
-		return this.allLanguages[0]
-	}
-	setLang(lang, noEvent){
-		strings = lang
-		var boldFonts = strings.font === "Microsoft YaHei, sans-serif"
-		loader.screen.style.fontFamily = strings.font
-		loader.screen.style.fontWeight = boldFonts ? "bold" : ""
-		loader.screen.classList[boldFonts ? "add" : "remove"]("bold-fonts")
-		strings.plural = new Intl.PluralRules(lang.intl)
+ 			for(var i in this.items){
+ 				this.storage[i] = null
+ 			}
+ 		}
+ 		
+ 		// ✨【158行目の真下からここを追加！】
+ 		// 過去の古いブラウザ保存データをすべて無視して、高画質＆演出ONを強制注入する
+ 		try {
+ 			var forcedSettings = JSON.parse(localStorage.getItem("settings") || "{}");
+ 			forcedSettings.resolution = "high";
+ 			forcedSettings.dancer = true;
+ 			forcedSettings.runner = true;
+ 			forcedSettings.mob = true;
+ 			localStorage.setItem("settings", JSON.stringify(forcedSettings));
+ 		} catch(e) {}
+ 
+ 		// 現在実行中のメモリデータも完全に本家設定で上書き固定する
+ 		this.storage.resolution = "high";
+ 		this.storage.dancer = true;
+ 		this.storage.runner = true;
+ 		this.storage.mob = true;
+ 	} // ← 175行目：init() 関数全体の終わりを告げる波カッコ
+ 	getItem(name){
 		if(!noEvent){
 			pageEvents.send("language-change", lang.id)
 		}
